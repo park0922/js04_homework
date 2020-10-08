@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>ぐるなびAPI</title>
+</head>
+<body>
+<div>
+    <p>ゴルフ場所検索（距離、項目でソートしてね）</p>
+    <div>
+        アクセスキーを入力<input id="key" value="e095319640f9d32626930d21fd11cb5a" type="text" size="45">
+        <input type="button" id="btn" value="送信"><br>
+        緯度lat: <input type="text" id="lat" value="">
+        経度lon: <input type="text" id="lon" value="">
+    </div>
+
+    <div>
+        距離：<select name="距離" id="distance">
+            <option value="">-</option>
+            <option value="10">10km</option>
+            <option value="20">20km</option>
+            <option value="30">30km</option>
+            <option value="40">40km</option>
+            <option value="50">50km</option>
+            <option value="60">60km</option>
+        </select>
+        項目：<select name="項目" id="Sentakushi">
+                <option value="evaluation">評価順</option>
+                <option value="highway">高速道路が近い順</option>
+                <option value="facility">設備がよい</option>
+                <option value="meal">食事がおいしい</option>
+                <option value="distance">距離が長い</option>    
+            </select>
+
+        検索結果: <input type="text" id="hitNumber" value="">
+
+    </div>
+</div>
+
+<div id="myMap" style='width:100%;height:97%;'></div>
+
+
+<table id="table">
+    <tr>
+        <th>ゴルフ場名</th>
+        <th>総合評価</th>
+        <th>説明</th>
+
+    </tr>
+</table>
+
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script src='https://www.bing.com/api/maps/mapcontrol?callback=GetMap&key=[]' async defer></script>
+<script src="BmapQueryGurunavi.js"></script>
+
+
+
+
+
+<script>
+
+function GetMap(){
+    //------------------------------------------------------------------------
+    //1. Instance
+    //------------------------------------------------------------------------
+    const map = new Bmap("#myMap");
+
+    //------------------------------------------------------------------------
+    //2. geolocation: Display Map
+    //   map.geolocation(function(data:object){...});
+    //------------------------------------------------------------------------
+    map.geolocation(function(data) {
+        //location
+        const lat = data.coords.latitude;
+        const lon = data.coords.longitude;   
+        $('#lat').val(lat);
+        $('#lon').val(lon);
+        
+    }) 
+};
+
+
+</script>
+
+<script>
+
+
+
+//*****************************************************
+// Click Event
+// ぐるなびAPIへデータRequest → APIサーバーからresponseデータ取得 
+//*****************************************************
+$("#btn").on("click", function() {
+    //送信データをObject変数で用意
+    const data = {
+        applicationId:"1001497030973890290",
+        latitude:$('#lat').val(),
+        longitude:$('#lon').val(),
+        searchRadius:$('#distance option:selected').val(),
+        sort:$('#Sentakushi option:selected').val(),
+        // areaCode:$('option:selected').val()
+            };
+    //Ajax（非同期通信）
+    axios.get('https://app.rakuten.co.jp/services/api/Gora/GoraGolfCourseSearch/20170623?', {
+        params:data
+    })
+    .then(function (response) {
+        //データ受信成功！！showData関数にデータを渡す
+        showData(response.data);
+    }).catch(function (error) {
+        console.log(error);//通信Error
+    }).then(function () {
+        //console.log("Last");//通信OK/Error後に処理を必ずさせたい場合
+    });
+});
+
+//*****************************************************
+//ぐるなびデータ表示処理
+//*****************************************************
+function showData(data){
+    //データ確認用
+    console.log(data);    
+    //データを繰り返し処理で取得
+    const len  = data.Items.length; //データ数を取得
+    const ALL = data.count;
+    $("#hitNumber").val(ALL);
+    for( let i=0; i<len; i++){
+        $("#table").append('<tr><td>' + data.Items[i].Item.golfCourseName + '</td><td>' + data.Items[i].Item.evaluation + '</td><td>' + data.Items[i].Item.golfCourseCaption + '</td>    </tr>');
+    };
+}
+</script>
+
+
+
+</body>
+</html>
+
